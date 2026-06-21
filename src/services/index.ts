@@ -1,5 +1,6 @@
 // Barrel da camada SERVICE (regras de negócio + orquestração).
 export { PersonaService } from './personaService.js';
+export { NicheService } from './nicheService.js';
 export { ContentService } from './contentService.js';
 export { SocialService } from './socialService.js';
 export { AnalyticsService } from './analyticsService.js';

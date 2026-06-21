@@ -37,7 +37,16 @@ export const ContentService = {
     if (!persona) throw new ServiceError(404, 'NOT_FOUND', 'Persona não encontrada nesta org.');
 
     // B5 — distribuição REAL e determinística do mix de pilares pelos N itens.
-    const pilaresAtribuidos = distributePilares(count, pilares);
+    // O "leque" da persona manda: usa os nichos configurados dela como pool; se o
+    // request mandar `pilares` explícitos, eles têm prioridade; só cai no default
+    // global se a persona não tiver nicho nenhum configurado.
+    const pool =
+      pilares && pilares.length > 0
+        ? pilares
+        : persona.niches && persona.niches.length > 0
+          ? persona.niches
+          : undefined;
+    const pilaresAtribuidos = distributePilares(count, pool);
     const links = affiliateLinks ?? [];
 
     const items = [];

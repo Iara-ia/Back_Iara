@@ -15,6 +15,7 @@
 import { prisma } from '../models/prisma.js';
 import { createProviders } from '../providers/index.js';
 import { config } from '../config/env.js';
+import { angleForNiche, labelForNiche, hashtagsForNiche } from '../lib/niches.js';
 import type { QaFlags, Asset, AffiliateLink } from '../models/dto.js';
 
 const providers = createProviders();
@@ -189,9 +190,10 @@ export async function generateOneContentItem(params: GenerateOneParams) {
     }
 
     // 3) GEN_CAPTION (tom da Isabella) — provider selecionado por env (mock|claude).
+    // O prompt usa o NICHO configurado: rótulo + ângulo de conteúdo do catálogo (leque).
     const capRes = await providers.llm.generateText({
       system: personality.systemPrompt ?? 'Você é a Isabella Souza.',
-      prompt: `pilar: ${pilar} | tema: conteúdo de ${pilar} no tom acolhedor da Isabella`,
+      prompt: `nicho: ${labelForNiche(pilar)} (pilar: ${pilar}) | tema: ${angleForNiche(pilar)}, no tom acolhedor da Isabella. Inclua hashtags relevantes do nicho.`,
       model: 'volume',
     });
     await recordJob({
@@ -209,7 +211,10 @@ export async function generateOneContentItem(params: GenerateOneParams) {
     if (disclosure.injected.length) {
       qaFlags.compliance = [...(qaFlags.compliance ?? []), ...disclosure.injected];
     }
-    const hashtags = (caption.match(/#[\p{L}\w]+/gu) ?? []).map((h) => h);
+    // Hashtags = as que vieram na legenda + as do catálogo do nicho (sem duplicar),
+    // garantindo tags relevantes mesmo que o provider não as inclua.
+    const captionTags = caption.match(/#[\p{L}\w]+/gu) ?? [];
+    const hashtags = Array.from(new Set([...captionTags, ...hashtagsForNiche(pilar)]));
 
     // 4) Gate de segurança + compliance (texto + imagem). hasAffiliateLink real (B3/Conar).
     const safety = await providers.safety.check({

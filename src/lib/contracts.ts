@@ -130,10 +130,24 @@ export interface ApiErr {
 }
 export type ApiResponse<T> = ApiOk<T> | ApiErr;
 
+// Catálogo de nichos (o "leque" configurável) — resposta de GET /niches.
+export interface NicheCatalogItem {
+  slug: string;
+  label: string;
+  category: string;
+  hashtags: string[];
+  angle: string;
+}
+export interface NicheCatalog {
+  all: NicheCatalogItem[];
+  groups: { category: string; niches: NicheCatalogItem[] }[];
+}
+
 // Mapa de rotas do MVP (referência única).
 export const API_ROUTES = {
   health: 'GET /health',
   me: 'GET /me',
+  listNiches: 'GET /niches',
   listSocialAccounts: 'GET /social-accounts',
   approveContent: 'POST /content/:id/approve',
   getPersona: 'GET /personas/:id',

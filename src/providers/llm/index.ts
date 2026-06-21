@@ -1,6 +1,7 @@
 // Interface provider-agnostic de LLM. Implementação real (MVP+): Claude (Anthropic / Bedrock).
 import Anthropic from '@anthropic-ai/sdk';
 import type { ProviderResult } from '../types.js';
+import { hashtagsForNiche, labelForNiche } from '../../lib/niches.js';
 
 export interface LlmGenerateParams {
   system: string; // system prompt da persona (personality.systemPrompt)
@@ -22,24 +23,16 @@ const CTA_POOL = [
   'Compartilha com quem precisa ver isso ✨',
   'Bora colocar em prática hoje?',
 ];
-const HASHTAG_POOL: Record<string, string[]> = {
-  saude: ['#saude', '#bemestar', '#nutricao', '#vidaleve'],
-  moda: ['#moda', '#look', '#estilo', '#ootd'],
-  beleza: ['#beleza', '#skincare', '#autocuidado'],
-  viagens: ['#viagem', '#trip', '#destinos'],
-  lifestyle: ['#lifestyle', '#rotina', '#diaadia'],
-};
-
 export class MockLlmProvider implements LlmProvider {
   async generateText(params: LlmGenerateParams): Promise<ProviderResult<string>> {
-    // Extrai o pilar do prompt (formato livre: "pilar: saude | tema: ...").
-    const pilarMatch = /pilar:\s*([a-zçãéíóú_]+)/i.exec(params.prompt);
+    // Extrai o nicho/pilar do prompt (slug kebab-case: "pilar: saude-mental").
+    const pilarMatch = /pilar:\s*([a-z0-9-]+)/i.exec(params.prompt);
     const pilar = (pilarMatch?.[1] ?? 'lifestyle').toLowerCase();
-    const tags = (HASHTAG_POOL[pilar] ?? HASHTAG_POOL.lifestyle)!.join(' ');
+    const tags = hashtagsForNiche(pilar).join(' ');
     const cta = CTA_POOL[params.prompt.length % CTA_POOL.length];
 
     const caption =
-      `Oi, gente! 💛 Hoje vim falar de ${pilar} de um jeito leve e real. ` +
+      `Oi, gente! 💛 Hoje vim falar de ${labelForNiche(pilar)} de um jeito leve e real. ` +
       `Pequenos passos no dia a dia fazem toda a diferença — sem pressão, no seu tempo. ` +
       `${cta}\n\n` +
       `🤖 Conteúdo gerado por IA. ${tags}`;

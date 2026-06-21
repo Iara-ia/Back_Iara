@@ -2,6 +2,7 @@
 // Erros de domínio sobem como ServiceError (status + code) para o controller traduzir.
 import { PersonaModel } from '../models/personaModel.js';
 import { ServiceError } from './errors.js';
+import { normalizeNiches } from '../lib/niches.js';
 import type { UpdatePersonaInput } from '../lib/contracts.js';
 
 export const PersonaService = {
@@ -22,7 +23,8 @@ export const PersonaService = {
     return PersonaModel.update(id, {
       ...(d.name !== undefined ? { name: d.name } : {}),
       ...(d.bio !== undefined ? { bio: d.bio } : {}),
-      ...(d.niches !== undefined ? { niches: d.niches } : {}),
+      // Nichos: normaliza a seleção do "leque" (slugs do catálogo + custom), sem duplicados.
+      ...(d.niches !== undefined ? { niches: normalizeNiches(d.niches) } : {}),
       ...(d.language !== undefined ? { language: d.language } : {}),
       ...(d.visualProfile !== undefined ? { visualProfile: d.visualProfile as object } : {}),
       ...(d.personality !== undefined ? { personality: d.personality as object } : {}),

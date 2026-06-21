@@ -3,6 +3,7 @@ import type { FastifyInstance } from 'fastify';
 import { registerHealthRoutes, registerAuthRoutes } from './authRoutes.js';
 import { registerStorageRoutes } from './storageRoutes.js';
 import { registerPersonaRoutes } from './personaRoutes.js';
+import { registerNicheRoutes } from './nicheRoutes.js';
 import { registerContentRoutes } from './contentRoutes.js';
 import { registerSocialRoutes } from './socialRoutes.js';
 import { registerAnalyticsRoutes } from './analyticsRoutes.js';
@@ -12,6 +13,7 @@ export async function registerRoutes(app: FastifyInstance) {
   await registerStorageRoutes(app); // público
   await registerAuthRoutes(app); // /me
   await registerPersonaRoutes(app);
+  await registerNicheRoutes(app);
   await registerContentRoutes(app);
   await registerSocialRoutes(app);
   await registerAnalyticsRoutes(app);
