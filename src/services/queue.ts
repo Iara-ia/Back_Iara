@@ -40,8 +40,14 @@ export interface GenerateItemPayload {
   pilar: string;
 }
 
+export interface PublishItemPayload {
+  contentItemId: string;
+  orgId: string;
+}
+
 export type IaraJobData =
   | { type: 'GENERATE_ITEM'; payload: GenerateItemPayload }
+  | { type: 'PUBLISH_ITEM'; payload: PublishItemPayload }
   | { type: 'TEST'; payload?: Record<string, unknown> };
 
 // Enfileiramento idempotente: jobId = contentItemId (BullMQ deduplica por jobId).
@@ -49,5 +55,22 @@ export async function enqueueGenerateItem(payload: GenerateItemPayload) {
   return jobQueue.add('generate-item', { type: 'GENERATE_ITEM', payload } as IaraJobData, {
     jobId: payload.contentItemId,
     ...GENERATE_ITEM_JOB_OPTS,
+  });
+}
+
+// Sprint 3 — publicação agendada: job ATRASADO (delay até a hora marcada). BullMQ dispara
+// sozinho quando o delay vence; o worker chama o provider de distribuição (mock|ayrshare).
+export const PUBLISH_ITEM_JOB_OPTS = {
+  attempts: 3,
+  backoff: { type: 'exponential' as const, delay: 2000 },
+  removeOnComplete: 1000,
+  removeOnFail: 1000,
+};
+
+export async function enqueuePublishItem(payload: PublishItemPayload, delayMs = 0) {
+  return jobQueue.add('publish-item', { type: 'PUBLISH_ITEM', payload } as IaraJobData, {
+    jobId: `publish-${payload.contentItemId}`,
+    delay: Math.max(0, Math.floor(delayMs)),
+    ...PUBLISH_ITEM_JOB_OPTS,
   });
 }

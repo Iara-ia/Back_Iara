@@ -54,25 +54,39 @@ export const ContentController = {
     return ok(toContentItemDTO(updated));
   },
 
-  // POST /content/:id/schedule — Sprint 3 (stub mantido).
+  // POST /content/:id/schedule (Sprint 3) — agenda publicação automática.
   async schedule(req: FastifyRequest, reply: FastifyReply) {
+    if (denyIfReadOnly(req, reply)) return;
+    const { id } = req.params as { id: string };
     const parsed = ScheduleContentSchema.safeParse(req.body);
     if (!parsed.success) {
       reply.code(400);
       return err('VALIDATION', 'Payload inválido', parsed.error.flatten());
     }
-    reply.code(501);
-    return err('NOT_IMPLEMENTED', 'POST /content/:id/schedule — Sprint 3');
+    const updated = await ContentService.schedule(
+      id,
+      req.session.orgId,
+      req.session.role,
+      parsed.data,
+    );
+    return ok(toContentItemDTO(updated));
   },
 
-  // POST /content/:id/affiliate-links — Sprint 3 (stub mantido).
+  // POST /content/:id/affiliate-links (Sprint 3) — define links de afiliado/parceria.
   async affiliateLinks(req: FastifyRequest, reply: FastifyReply) {
+    if (denyIfReadOnly(req, reply)) return;
+    const { id } = req.params as { id: string };
     const parsed = SetAffiliateLinksSchema.safeParse(req.body);
     if (!parsed.success) {
       reply.code(400);
       return err('VALIDATION', 'Payload inválido', parsed.error.flatten());
     }
-    reply.code(501);
-    return err('NOT_IMPLEMENTED', 'POST /content/:id/affiliate-links — Sprint 3');
+    const updated = await ContentService.setAffiliateLinks(
+      id,
+      req.session.orgId,
+      req.session.role,
+      parsed.data,
+    );
+    return ok(toContentItemDTO(updated));
   },
 };

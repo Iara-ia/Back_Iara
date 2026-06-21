@@ -9,12 +9,15 @@ export { canWrite, canApprove } from './rbac.js';
 
 // Pipeline + fila + mix (compartilhados API/worker).
 export { generateOneContentItem, markItemFailed } from './contentPipeline.js';
+export { publishOneContentItem } from './publishItem.js';
 export { distributePilares, DEFAULT_PILARES } from './pilarMix.js';
 export {
   connection,
   jobQueue,
   QUEUE_NAME,
   enqueueGenerateItem,
+  enqueuePublishItem,
   GENERATE_ITEM_JOB_OPTS,
+  PUBLISH_ITEM_JOB_OPTS,
 } from './queue.js';
-export type { IaraJobData, GenerateItemPayload } from './queue.js';
+export type { IaraJobData, GenerateItemPayload, PublishItemPayload } from './queue.js';

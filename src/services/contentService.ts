@@ -8,13 +8,18 @@
 import { ContentModel } from '../models/contentModel.js';
 import { PersonaModel } from '../models/personaModel.js';
 import { distributePilares } from './pilarMix.js';
-import { enqueueGenerateItem } from './queue.js';
+import { enqueueGenerateItem, enqueuePublishItem } from './queue.js';
 import { createProviders } from '../providers/index.js';
 import { config } from '../config/env.js';
-import { canApprove } from './rbac.js';
+import { canApprove, canWrite } from './rbac.js';
 import { ServiceError } from './errors.js';
-import type { Role } from '../lib/enums.js';
-import type { GenerateContentInput, PatchContentInput } from '../lib/contracts.js';
+import type { Role, SocialPlatform } from '../lib/enums.js';
+import type {
+  GenerateContentInput,
+  PatchContentInput,
+  ScheduleContentInput,
+  SetAffiliateLinksInput,
+} from '../lib/contracts.js';
 
 const providers = createProviders();
 
@@ -138,6 +143,58 @@ export const ContentService = {
       ...(d.status !== undefined ? { status: d.status } : {}),
       ...(reEvaluatedQa ? { qaFlags: reEvaluatedQa } : {}),
       ...(willApprove ? { approvedBy: userId, approvedAt: new Date() } : {}),
+    });
+  },
+
+  // POST /content/:id/schedule (Sprint 3) — agenda um item APROVADO para publicação automática.
+  // Marca AGENDADO + scheduleAt + plataformas e enfileira um job ATRASADO (delay até a hora).
+  // O worker publica sozinho quando o delay vence.
+  async schedule(id: string, orgId: string, role: Role, d: ScheduleContentInput) {
+    if (!canWrite(role)) throw new ServiceError(403, 'FORBIDDEN', 'Seu papel não permite agendar.');
+    const item = await ContentModel.findByIdInOrg(id, orgId);
+    if (!item) throw new ServiceError(404, 'NOT_FOUND', 'Item não encontrado nesta org.');
+    if (item.status !== 'APROVADO') {
+      throw new ServiceError(
+        409,
+        'INVALID_STATE',
+        `Só itens APROVADOS podem ser agendados (status atual: ${item.status}).`,
+      );
+    }
+    const when = new Date(d.scheduleAt);
+    const updated = await ContentModel.update(id, {
+      status: 'AGENDADO',
+      scheduleAt: when,
+      platforms: d.platforms as SocialPlatform[],
+    });
+    await enqueuePublishItem({ contentItemId: id, orgId }, when.getTime() - Date.now());
+    return updated;
+  },
+
+  // POST /content/:id/affiliate-links (Sprint 3) — define os links de afiliado/parceria do item.
+  // Ter afiliado dispara o selo Conar: garante #publi na legenda e registra compliance.
+  async setAffiliateLinks(id: string, orgId: string, role: Role, d: SetAffiliateLinksInput) {
+    if (!canWrite(role)) throw new ServiceError(403, 'FORBIDDEN', 'Seu papel não permite editar.');
+    const item = await ContentModel.findByIdInOrg(id, orgId);
+    if (!item) throw new ServiceError(404, 'NOT_FOUND', 'Item não encontrado nesta org.');
+
+    const hasLinks = d.links.length > 0;
+    const hashtags = (item.hashtags ?? []) as string[];
+    const compliance = ((item.qaFlags ?? {}) as { compliance?: string[] }).compliance ?? [];
+
+    let caption = item.caption ?? '';
+    const newCompliance = [...compliance];
+    if (hasLinks && !/#publi/i.test(caption)) {
+      // Conar: conteúdo com afiliado/parceria precisa de #publi explícito.
+      caption = caption ? `${caption} #publi` : '#publi';
+      if (!hashtags.some((h) => /#publi/i.test(h))) hashtags.push('#publi');
+      if (!newCompliance.includes('publi-injetado')) newCompliance.push('publi-injetado');
+    }
+
+    return ContentModel.update(id, {
+      affiliateLinks: d.links as object,
+      caption,
+      hashtags,
+      qaFlags: { ...((item.qaFlags ?? {}) as object), compliance: newCompliance } as object,
     });
   },
 };

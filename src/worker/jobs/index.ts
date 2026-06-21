@@ -4,7 +4,11 @@
 //
 // Idempotência: jobId = contentItemId; o pipeline faz no-op se o item já não estiver em GERADO.
 // Retry/backoff: configurado na fila (GENERATE_ITEM_JOB_OPTS). FALHOU só na última tentativa.
-import { generateOneContentItem, type IaraJobData } from '../../services/index.js';
+import {
+  generateOneContentItem,
+  publishOneContentItem,
+  type IaraJobData,
+} from '../../services/index.js';
 
 export type JobData = IaraJobData;
 
@@ -20,6 +24,15 @@ export async function handleJob(data: JobData): Promise<{ ok: boolean; note: str
       return {
         ok: true,
         note: `GENERATE_ITEM ${contentItemId} (pilar=${pilar}) → ${item.status}`,
+      };
+    }
+
+    case 'PUBLISH_ITEM': {
+      const { contentItemId } = data.payload;
+      const item = await publishOneContentItem({ contentItemId });
+      return {
+        ok: true,
+        note: `PUBLISH_ITEM ${contentItemId} → ${item?.status ?? 'no-op'}`,
       };
     }
 
