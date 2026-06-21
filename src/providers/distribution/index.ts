@@ -56,13 +56,30 @@ export class MockDistributionProvider implements DistributionProvider {
     return { data: { externalPostIds: ids }, costEstimateBRL: 0, raw: { mock: true } };
   }
 
-  async fetchInsights(): Promise<ProviderResult<InsightsResult>> {
+  // Métricas simuladas DETERMINÍSTICAS por post (mesmo externalPostId → mesmos números),
+  // para o Analytics mostrar dados coerentes sem rede real. Plugue o real (Ayrshare/Graph).
+  async fetchInsights(
+    externalPostId: string,
+    platform: SocialPlatform,
+  ): Promise<ProviderResult<InsightsResult>> {
+    const h = hash(externalPostId);
+    const reach = 3000 + (h % 9000); // 3k–12k
+    const likes = Math.floor(reach * (0.04 + (h % 30) / 1000)); // ~4–7%
+    const comments = Math.floor(likes * 0.08);
+    const followers = 55000 + (hash(platform) % 15000);
     return {
-      data: { followers: 0, reach: 0, likes: 0, comments: 0 },
+      data: { followers, reach, likes, comments },
       costEstimateBRL: 0,
-      raw: { mock: true },
+      raw: { mock: true, externalPostId, platform },
     };
   }
+}
+
+// Hash determinístico (djb2) para métricas simuladas estáveis por post/plataforma.
+function hash(s: string): number {
+  let h = 5381;
+  for (let i = 0; i < s.length; i++) h = ((h * 33) ^ s.charCodeAt(i)) >>> 0;
+  return h >>> 0;
 }
 
 // ---- REAL: Ayrshare ----
