@@ -105,6 +105,27 @@ export const SetAffiliateLinksSchema = z.object({
 });
 export type SetAffiliateLinksInput = z.infer<typeof SetAffiliateLinksSchema>;
 
+// ---- POST /interactions (engajamento) ----
+export const ReceiveInteractionSchema = z.object({
+  personaId: z.string(),
+  platform: SocialPlatformSchema,
+  externalId: z.string().min(1),
+  text: z.string().min(1),
+});
+export type ReceiveInteractionInput = z.infer<typeof ReceiveInteractionSchema>;
+
+export interface InteractionDTO {
+  id: string;
+  personaId: string;
+  platform: string;
+  externalId: string;
+  kind: string; // duvida | elogio | e_ia | spam | parceria
+  inboundText: string;
+  replyDraft: string | null;
+  status: string; // RECEIVED | CLASSIFIED | REPLY_DRAFTED | ANSWERED | ROUTED
+  createdAt: string;
+}
+
 // ---- POST /content/:id/approve ----
 export const ApproveContentSchema = z.object({}).optional();
 
@@ -148,6 +169,9 @@ export const API_ROUTES = {
   health: 'GET /health',
   me: 'GET /me',
   listNiches: 'GET /niches',
+  receiveInteraction: 'POST /interactions',
+  listInteractions: 'GET /interactions',
+  autopilot: 'POST /content/autopilot',
   listSocialAccounts: 'GET /social-accounts',
   approveContent: 'POST /content/:id/approve',
   getPersona: 'GET /personas/:id',
