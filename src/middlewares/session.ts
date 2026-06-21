@@ -13,6 +13,8 @@ import type { FastifyInstance, FastifyRequest, FastifyReply } from 'fastify';
 import { UserModel } from '../models/userModel.js';
 import { canWrite } from '../services/rbac.js';
 import { err } from '../lib/reply.js';
+import { config } from '../config/env.js';
+import { prisma } from '../models/prisma.js';
 import type { Role } from '../lib/enums.js';
 
 export interface Session {
@@ -54,13 +56,45 @@ async function resolveSession(req: FastifyRequest): Promise<Session | null> {
   };
 }
 
+// AUTH real (Clerk), env-gated. Ligar: AUTH_PROVIDER=clerk + CLERK_SECRET_KEY + `npm i @clerk/backend`.
+// Verifica o JWT do Clerk (Authorization: Bearer) e mapeia o e-mail para o nosso User.
+// Sem token Bearer, retorna null → cai no resolveSession (dev header) para o painel seguir.
+async function resolveClerkSession(req: FastifyRequest): Promise<Session | null> {
+  const auth = req.headers['authorization'];
+  const token = typeof auth === 'string' && /^Bearer /i.test(auth) ? auth.slice(7).trim() : '';
+  if (!token) return null;
+  if (!config.clerkSecretKey) {
+    throw new Error('AUTH_PROVIDER=clerk requer CLERK_SECRET_KEY (e `npm i @clerk/backend`).');
+  }
+  const sdkName = '@clerk' + '/backend'; // specifier computado: SDK só exigido em runtime
+  const mod = (await import(sdkName)) as {
+    verifyToken: (t: string, o: { secretKey: string }) => Promise<Record<string, unknown>>;
+  };
+  const claims = await mod.verifyToken(token, { secretKey: config.clerkSecretKey });
+  const email = String(claims['email'] ?? claims['email_address'] ?? '');
+  if (!email) return null;
+  const user = await prisma.user.findFirst({ where: { email }, include: { org: true } });
+  if (!user) return null;
+  return {
+    userId: user.id,
+    orgId: user.orgId,
+    role: user.role,
+    email: user.email,
+    name: user.name,
+    orgName: user.org.name,
+  };
+}
+
 // Rotas públicas (sem auth). /storage/* tratado por prefixo abaixo.
 const PUBLIC_PATHS = new Set(['/health']);
 
 export function registerAuth(app: FastifyInstance) {
   app.addHook('onRequest', async (req, reply) => {
     if (PUBLIC_PATHS.has(req.url.split('?')[0]!) || req.url.startsWith('/storage/')) return;
-    const session = await resolveSession(req);
+    const session =
+      config.authProvider === 'clerk'
+        ? ((await resolveClerkSession(req)) ?? (await resolveSession(req)))
+        : await resolveSession(req);
     if (!session) {
       reply.code(401);
       return reply.send(err('UNAUTHENTICATED', 'Sessão inválida ou usuário não encontrado.'));

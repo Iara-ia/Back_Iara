@@ -11,6 +11,19 @@ export const config = {
   costLimitPersonaDailyBRL: Number(process.env.COST_LIMIT_PERSONA_DAILY_BRL ?? 50),
   // Chave de criptografia dos tokens sociais (em prod: KMS).
   tokenEncKey: process.env.TOKEN_ENC_KEY ?? 'dev-fallback-key-troque-isto',
+  // Auth: 'dev' (header x-user-id) | 'clerk' (verifica token Clerk). Real exige CLERK_SECRET_KEY.
+  authProvider: (process.env.AUTH_PROVIDER ?? 'dev').toLowerCase(),
+  clerkSecretKey: process.env.CLERK_SECRET_KEY ?? '',
+  // Storage: 'local' (.storage + GET /storage/*) | 's3' | 'r2'. Real exige as chaves S3_* abaixo.
+  storage: {
+    provider: (process.env.STORAGE_PROVIDER ?? 'local').toLowerCase(),
+    bucket: process.env.S3_BUCKET ?? '',
+    region: process.env.S3_REGION ?? 'us-east-1',
+    endpoint: process.env.S3_ENDPOINT ?? '', // R2/MinIO; vazio = AWS S3 padrão
+    accessKeyId: process.env.S3_ACCESS_KEY_ID ?? '',
+    secretAccessKey: process.env.S3_SECRET_ACCESS_KEY ?? '',
+    publicBaseUrl: process.env.STORAGE_PUBLIC_BASE_URL ?? '', // CDN/CloudFront; vazio = local
+  },
   isProd: process.env.NODE_ENV === 'production',
   isDev: process.env.NODE_ENV === 'development',
 } as const;
