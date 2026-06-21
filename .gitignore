@@ -1,0 +1,40 @@
+# deps
+node_modules/
+.pnp.*
+
+# builds
+dist/
+build/
+*.tsbuildinfo
+
+# env / secrets
+.env
+.env.local
+.env.*.local
+*.pem
+
+# storage local (stub do S3/R2)
+.storage/
+
+# prisma
+prisma/migrations/dev.db*
+
+# logs
+*.log
+npm-debug.log*
+logs/
+
+# os / editor
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+
+# test / coverage
+coverage/
+.nyc_output/
+
+# misc
+.turbo/
+.cache/
+tmp/

@@ -1,0 +1,227 @@
+// ============================================================
+// IARA — schema Prisma (fonte: IARA_MVP_Kickoff.md §3.3)
+// Multi-tenant + multi-persona desde o núcleo (princípio de produto #2).
+// pgvector habilitado para memória semântica da persona (V1).
+// ============================================================
+
+generator client {
+  provider        = "prisma-client-js"
+  previewFeatures = ["postgresqlExtensions"]
+}
+
+datasource db {
+  provider   = "postgresql"
+  url        = env("DATABASE_URL")
+  extensions = [pgvector(map: "vector")]
+}
+
+// ---------------------- ENUMS ----------------------
+
+enum Role {
+  OWNER
+  EDITOR
+  VIEWER
+}
+
+enum PersonaStatus {
+  DRAFT
+  ACTIVE
+  PAUSED
+}
+
+enum ContentStatus {
+  RASCUNHO
+  GERADO
+  EM_REVISAO
+  APROVADO
+  AGENDADO
+  PUBLICADO
+  FALHOU
+  REPROVADO
+}
+
+enum ContentType {
+  POST
+  REEL
+  STORY
+  BLOG
+}
+
+enum SocialPlatform {
+  INSTAGRAM
+  TIKTOK
+  YOUTUBE
+}
+
+enum AccountStatus {
+  CONNECTED
+  ERROR
+  EXPIRED
+}
+
+enum JobType {
+  GEN_IMAGE
+  CONSISTENCY_GATE
+  GEN_CAPTION
+  SAFETY_GATE
+  PUBLISH
+  FETCH_INSIGHTS
+}
+
+enum JobStatus {
+  QUEUED
+  RUNNING
+  DONE
+  FAILED
+}
+
+enum InteractionStatus {
+  RECEIVED
+  CLASSIFIED
+  REPLY_DRAFTED
+  ANSWERED
+  ROUTED
+}
+
+enum MonetizationSource {
+  AFFILIATE
+  BRAND_DEAL
+  SUBSCRIPTION
+  ADSENSE
+  OTHER
+}
+
+// ---------------------- MODELS ----------------------
+
+model Org {
+  id           String              @id @default(cuid())
+  name         String
+  createdAt    DateTime            @default(now())
+  users        User[]
+  personas     Persona[]
+  contentItems ContentItem[]
+  jobs         Job[]
+  monetization MonetizationEvent[]
+}
+
+model User {
+  id        String   @id @default(cuid())
+  orgId     String
+  org       Org      @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  email     String   @unique
+  name      String?
+  role      Role     @default(OWNER)
+  createdAt DateTime @default(now())
+
+  @@index([orgId])
+}
+
+model Persona {
+  id             String          @id @default(cuid())
+  orgId          String
+  org            Org             @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  name           String
+  bio            String?
+  niches         String[]
+  language       String          @default("pt-BR")
+  status         PersonaStatus   @default(DRAFT)
+  visualProfile  Json // { loraId, faceRefs:[{url,approved}], paleta:[] }
+  voiceProfile   Json? // { elevenLabsVoiceId } — V1
+  personality    Json // { systemPrompt, tom, do:[], dont:[] }
+  aiDisclosure   Boolean         @default(true)
+  socialAccounts SocialAccount[]
+  contentItems   ContentItem[]
+  interactions   Interaction[]
+  createdAt      DateTime        @default(now())
+
+  @@index([orgId])
+}
+
+model SocialAccount {
+  id        String         @id @default(cuid())
+  personaId String
+  persona   Persona        @relation(fields: [personaId], references: [id], onDelete: Cascade)
+  platform  SocialPlatform
+  handle    String
+  tokenEnc  String // token criptografado (KMS / TOKEN_ENC_KEY)
+  status    AccountStatus  @default(CONNECTED)
+  createdAt DateTime       @default(now())
+
+  @@index([personaId])
+}
+
+model ContentItem {
+  id              String              @id @default(cuid())
+  orgId           String
+  org             Org                 @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  personaId       String
+  persona         Persona             @relation(fields: [personaId], references: [id], onDelete: Cascade)
+  type            ContentType         @default(POST)
+  pilar           String?
+  status          ContentStatus       @default(RASCUNHO)
+  assets          Json // [{ kind:'image', url, width, height }]
+  caption         String?
+  hashtags        String[]
+  cta             String?
+  affiliateLinks  Json? // [{ url, network, utm, cupom }]
+  qaFlags         Json? // { consistencyScore, safety:'pass', compliance:[...] }
+  scheduleAt      DateTime?
+  platforms       SocialPlatform[]
+  externalPostIds Json? // { instagram:'...', tiktok:'...' }
+  approvedBy      String?
+  approvedAt      DateTime?
+  jobs            Job[]
+  monetization    MonetizationEvent[]
+  createdAt       DateTime            @default(now())
+
+  @@index([orgId, status])
+  @@index([personaId])
+}
+
+model Job {
+  id            String       @id @default(cuid())
+  orgId         String
+  org           Org          @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  contentItemId String?
+  contentItem   ContentItem? @relation(fields: [contentItemId], references: [id], onDelete: SetNull)
+  type          JobType
+  status        JobStatus    @default(QUEUED)
+  payload       Json
+  costEstimate  Float        @default(0)
+  attempts      Int          @default(0)
+  logs          Json?
+  createdAt     DateTime     @default(now())
+  updatedAt     DateTime     @updatedAt
+
+  @@index([orgId, status])
+}
+
+model Interaction {
+  id          String            @id @default(cuid())
+  personaId   String
+  persona     Persona           @relation(fields: [personaId], references: [id], onDelete: Cascade)
+  platform    SocialPlatform
+  externalId  String
+  kind        String // duvida | elogio | e_ia | spam | parceria
+  inboundText String
+  replyDraft  String?
+  status      InteractionStatus @default(RECEIVED)
+  createdAt   DateTime          @default(now())
+
+  @@index([personaId])
+}
+
+model MonetizationEvent {
+  id            String             @id @default(cuid())
+  orgId         String
+  org           Org                @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  contentItemId String?
+  contentItem   ContentItem?       @relation(fields: [contentItemId], references: [id], onDelete: SetNull)
+  source        MonetizationSource
+  amount        Float
+  currency      String             @default("BRL")
+  externalRef   String?
+  occurredAt    DateTime           @default(now())
+
+  @@index([orgId])
+}

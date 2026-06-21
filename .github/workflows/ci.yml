@@ -1,0 +1,22 @@
+# CI do Back_Iara: gera o client Prisma + typecheck + testes em cada PR/push.
+name: ci
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - run: npm ci
+      # Gera o @prisma/client (necessário para o typecheck compilar os tipos do banco).
+      - run: npm run db:generate
+      - run: npm run typecheck
+      - run: npm run test --if-present
