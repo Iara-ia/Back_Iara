@@ -8,7 +8,7 @@ import {
   ScheduleContentSchema,
   SetAffiliateLinksSchema,
 } from '../lib/contracts.js';
-import { ContentService } from '../services/index.js';
+import { ContentService, AutopilotService } from '../services/index.js';
 import { toContentItemDTO } from '../views/serializers.js';
 import { ok, err } from '../lib/reply.js';
 import { denyIfReadOnly } from '../middlewares/session.js';
@@ -52,6 +52,14 @@ export const ContentController = {
       parsed.data,
     );
     return ok(toContentItemDTO(updated));
+  },
+
+  // POST /content/autopilot (V1) — piloto automático: auto-aprova (gates) + auto-agenda a semana.
+  async autopilot(req: FastifyRequest, reply: FastifyReply) {
+    if (denyIfReadOnly(req, reply)) return;
+    const { personaId } = (req.body ?? {}) as { personaId?: string };
+    const result = await AutopilotService.runForOrg(req.session.orgId, personaId);
+    return ok(result);
   },
 
   // POST /content/:id/schedule (Sprint 3) — agenda publicação automática.

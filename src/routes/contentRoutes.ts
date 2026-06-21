@@ -4,6 +4,7 @@ import { ContentController } from '../controllers/contentController.js';
 
 export async function registerContentRoutes(app: FastifyInstance) {
   app.post('/content/generate', ContentController.generate);
+  app.post('/content/autopilot', ContentController.autopilot);
   app.get('/content', ContentController.list);
   app.patch('/content/:id', ContentController.patch);
   app.post('/content/:id/schedule', ContentController.schedule);
