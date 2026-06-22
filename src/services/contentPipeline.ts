@@ -43,7 +43,7 @@ async function spentLast24h(orgId: string): Promise<number> {
 async function recordJob(params: {
   orgId: string;
   contentItemId: string;
-  type: 'GEN_IMAGE' | 'GEN_CAPTION' | 'CONSISTENCY_GATE' | 'SAFETY_GATE';
+  type: 'GEN_IMAGE' | 'GEN_CAPTION' | 'CONSISTENCY_GATE' | 'SAFETY_GATE' | 'GEN_VIDEO' | 'GEN_VOICE';
   status: 'DONE' | 'FAILED';
   costEstimate: number;
   logs?: unknown;
@@ -245,6 +245,36 @@ export async function generateOneContentItem(params: GenerateOneParams) {
         },
       });
       return item;
+    }
+
+    // 4b) REEL — anima a imagem (vídeo) + narração (voz) no tom da Isabella.
+    // Stub determinístico (sem chave); real = Runway/Kling + ElevenLabs atrás da mesma interface.
+    if (item.type === 'REEL') {
+      const vid = await providers.video.generate({
+        imageUrl: generated.url,
+        prompt: `Reel da Isabella sobre ${labelForNiche(pilar)}, ${angleForNiche(pilar)}`,
+        durationSec: 8,
+      });
+      assets.push({ kind: 'video', url: vid.data.url });
+      await recordJob({
+        orgId,
+        contentItemId: item.id,
+        type: 'GEN_VIDEO',
+        status: 'DONE',
+        costEstimate: vid.costEstimateBRL,
+        logs: vid.raw,
+      });
+
+      const voz = await providers.voice.synthesize({ text: caption, voiceId: 'isabella-pt-br' });
+      assets.push({ kind: 'audio', url: voz.data.url });
+      await recordJob({
+        orgId,
+        contentItemId: item.id,
+        type: 'GEN_VOICE',
+        status: 'DONE',
+        costEstimate: voz.costEstimateBRL,
+        logs: voz.raw,
+      });
     }
 
     // 5) Passou nos gates → EM_REVISAO (entra no kanban para o humano curar).

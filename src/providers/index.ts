@@ -20,6 +20,8 @@ export * from './safety/index.js';
 
 import { MockLlmProvider, ClaudeLlmProvider, type LlmProvider } from './llm/index.js';
 import { MockImageProvider, FluxImageProvider, type ImageProvider } from './image/index.js';
+import { StubVideoProvider, type VideoProvider } from './video/index.js';
+import { StubVoiceProvider, type VoiceProvider } from './voice/index.js';
 import {
   MockDistributionProvider,
   AyrshareDistributionProvider,
@@ -37,6 +39,8 @@ import {
 export interface Providers {
   llm: LlmProvider;
   image: ImageProvider;
+  video: VideoProvider;
+  voice: VoiceProvider;
   distribution: DistributionProvider;
   safety: SafetyProvider;
   consistency: ConsistencyProvider;
@@ -69,7 +73,12 @@ export function createProviders(): Providers {
       ? new RealConsistencyProvider()
       : new MockConsistencyProvider();
 
-  return { llm, image, distribution, safety, consistency };
+  // Vídeo/voz (Reel): stub determinístico (sem chave). Real (Runway/Kling + ElevenLabs)
+  // entra atrás da mesma interface quando houver PROVIDER_VIDEO/VOICE + chave.
+  const video = new StubVideoProvider();
+  const voice = new StubVoiceProvider();
+
+  return { llm, image, video, voice, distribution, safety, consistency };
 }
 
 // Diagnóstico: quais providers estão ativos (para logar no boot do worker/api).

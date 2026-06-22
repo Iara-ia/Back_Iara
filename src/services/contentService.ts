@@ -36,7 +36,7 @@ export const ContentService = {
   // POST /content/generate — cria N ContentItems em GERADO (placeholder) e ENFILEIRA
   // um job GENERATE_ITEM por item. A geração roda ASSÍNCRONA no worker.
   async generate(orgId: string, input: GenerateContentInput) {
-    const { personaId, count, pilares, affiliateLinks } = input;
+    const { personaId, count, pilares, affiliateLinks, type } = input;
 
     const persona = await PersonaModel.findByIdInOrg(personaId, orgId);
     if (!persona) throw new ServiceError(404, 'NOT_FOUND', 'Persona não encontrada nesta org.');
@@ -59,7 +59,7 @@ export const ContentService = {
       const item = await ContentModel.create({
         orgId,
         personaId,
-        type: 'POST',
+        type: type ?? 'POST',
         pilar,
         status: 'GERADO',
         assets: [],

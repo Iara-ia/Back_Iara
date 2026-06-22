@@ -5,8 +5,8 @@ import {
   hashtagsForNiche,
   labelForNiche,
   listNicheCatalog,
-} from '../lib/niches';
-import { distributePilares, DEFAULT_PILARES } from '../services/pilarMix';
+} from '../lib/niches.js';
+import { distributePilares, DEFAULT_PILARES } from '../services/pilarMix.js';
 
 describe('niches (leque configurável)', () => {
   it('slugify remove acento e espaços', () => {

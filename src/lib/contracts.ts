@@ -83,6 +83,7 @@ export const GenerateContentSchema = z.object({
   personaId: z.string(),
   count: z.number().int().min(1).max(7).default(7),
   pilares: z.array(z.string()).optional(), // mix de pilares (B5)
+  type: z.enum(['POST', 'REEL']).optional(), // POST (default) | REEL (vídeo+voz)
   affiliateLinks: z.array(AffiliateLinkSchema).optional(),
 });
 export type GenerateContentInput = z.infer<typeof GenerateContentSchema>;
