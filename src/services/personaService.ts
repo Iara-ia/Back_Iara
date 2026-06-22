@@ -3,11 +3,31 @@
 import { PersonaModel } from '../models/personaModel.js';
 import { ServiceError } from './errors.js';
 import { normalizeNiches } from '../lib/niches.js';
-import type { UpdatePersonaInput } from '../lib/contracts.js';
+import type { CreatePersonaInput, UpdatePersonaInput } from '../lib/contracts.js';
 
 export const PersonaService = {
   list(orgId: string) {
     return PersonaModel.listByOrg(orgId);
+  },
+
+  // Cria uma nova persona na org (multi-persona). Campos obrigatórios recebem defaults.
+  create(orgId: string, d: CreatePersonaInput) {
+    return PersonaModel.create({
+      orgId,
+      name: d.name,
+      bio: d.bio ?? null,
+      niches: d.niches ? normalizeNiches(d.niches) : [],
+      language: d.language ?? 'pt-BR',
+      visualProfile: { loraId: null, faceRefs: [], paleta: ['#C96A4E', '#E7C8A0', '#8F9E80'] },
+      personality: {
+        systemPrompt:
+          d.systemPrompt ?? `Você é ${d.name}, influenciadora virtual brasileira criada por IA.`,
+        tom: d.tom ?? 'próximo, motivador, informal',
+        do: [],
+        dont: [],
+      },
+      aiDisclosure: true,
+    });
   },
 
   async getById(id: string, orgId: string) {

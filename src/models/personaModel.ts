@@ -11,6 +11,10 @@ export const PersonaModel = {
     return prisma.persona.findFirst({ where: { id, orgId } });
   },
 
+  create(data: Prisma.PersonaUncheckedCreateInput) {
+    return prisma.persona.create({ data });
+  },
+
   update(id: string, data: Prisma.PersonaUpdateInput) {
     return prisma.persona.update({ where: { id }, data });
   },

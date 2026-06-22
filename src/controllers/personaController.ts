@@ -1,6 +1,6 @@
 // CONTROLLER: Persona — recebe req/res, valida payload, chama o service, serializa via view.
 import type { FastifyRequest, FastifyReply } from 'fastify';
-import { UpdatePersonaSchema, UploadRefsSchema } from '../lib/contracts.js';
+import { CreatePersonaSchema, UpdatePersonaSchema, UploadRefsSchema } from '../lib/contracts.js';
 import { PersonaService } from '../services/index.js';
 import { toPersonaDTO } from '../views/serializers.js';
 import { ok, err } from '../lib/reply.js';
@@ -10,6 +10,18 @@ export const PersonaController = {
   async list(req: FastifyRequest) {
     const personas = await PersonaService.list(req.session.orgId);
     return ok(personas.map(toPersonaDTO));
+  },
+
+  // POST /personas — cria nova persona (multi-persona).
+  async create(req: FastifyRequest, reply: FastifyReply) {
+    if (denyIfReadOnly(req, reply)) return;
+    const parsed = CreatePersonaSchema.safeParse(req.body);
+    if (!parsed.success) {
+      reply.code(400);
+      return err('VALIDATION', 'Payload inválido', parsed.error.flatten());
+    }
+    const persona = await PersonaService.create(req.session.orgId, parsed.data);
+    return ok(toPersonaDTO(persona));
   },
 
   async getById(req: FastifyRequest) {

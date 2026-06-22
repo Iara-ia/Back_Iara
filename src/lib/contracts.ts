@@ -19,6 +19,17 @@ export const ContentStatusSchema = z.enum([
   'REPROVADO',
 ]);
 
+// ---- POST /personas (criar nova persona — multi-persona) ----
+export const CreatePersonaSchema = z.object({
+  name: z.string().min(2),
+  bio: z.string().optional(),
+  niches: z.array(z.string()).optional(),
+  language: z.string().optional(),
+  systemPrompt: z.string().optional(),
+  tom: z.string().optional(),
+});
+export type CreatePersonaInput = z.infer<typeof CreatePersonaSchema>;
+
 // ---- PUT /personas/:id ----
 export const UpdatePersonaSchema = z.object({
   name: z.string().min(1).optional(),
