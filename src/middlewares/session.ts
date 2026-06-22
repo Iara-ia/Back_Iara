@@ -90,7 +90,12 @@ const PUBLIC_PATHS = new Set(['/health']);
 
 export function registerAuth(app: FastifyInstance) {
   app.addHook('onRequest', async (req, reply) => {
-    if (PUBLIC_PATHS.has(req.url.split('?')[0]!) || req.url.startsWith('/storage/')) return;
+    if (
+      PUBLIC_PATHS.has(req.url.split('?')[0]!) ||
+      req.url.startsWith('/storage/') ||
+      req.url.startsWith('/r/')
+    )
+      return;
     const session =
       config.authProvider === 'clerk'
         ? ((await resolveClerkSession(req)) ?? (await resolveSession(req)))

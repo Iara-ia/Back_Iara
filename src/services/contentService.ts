@@ -197,4 +197,17 @@ export const ContentService = {
       qaFlags: { ...((item.qaFlags ?? {}) as object), compliance: newCompliance } as object,
     });
   },
+
+  // Tracking real de afiliado: incrementa o contador de cliques do link e devolve a URL
+  // de destino (usado pelo redirect público GET /r/:itemId/:idx). Sem escopo de org (link público).
+  async recordAffiliateClick(itemId: string, idx: number): Promise<string | null> {
+    const item = await ContentModel.findById(itemId);
+    if (!item) return null;
+    const links = (item.affiliateLinks ?? []) as Array<{ url: string; clicks?: number }>;
+    const link = links[idx];
+    if (!link) return null;
+    link.clicks = (link.clicks ?? 0) + 1;
+    await ContentModel.update(itemId, { affiliateLinks: links as object });
+    return link.url;
+  },
 };
