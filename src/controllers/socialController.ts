@@ -23,6 +23,13 @@ export const SocialController = {
     return ok(toSocialAccountDTO(account));
   },
 
+  async disconnect(req: FastifyRequest, reply: FastifyReply) {
+    if (denyIfReadOnly(req, reply)) return;
+    const { id } = req.params as { id: string };
+    const out = await SocialService.disconnect(req.session.orgId, id);
+    return ok(out);
+  },
+
   // Webhook do Ayrshare — Sprint 3 (mantido).
   async ayrshareWebhook(_req: FastifyRequest, reply: FastifyReply) {
     reply.code(202);

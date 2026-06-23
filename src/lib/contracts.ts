@@ -207,6 +207,7 @@ export const API_ROUTES = {
   updatePersona: 'PUT /personas/:id',
   uploadRefs: 'POST /personas/:id/refs',
   connectSocial: 'POST /social-accounts/connect',
+  disconnectSocial: 'DELETE /social-accounts/:id',
   generateContent: 'POST /content/generate',
   listContent: 'GET /content',
   patchContent: 'PATCH /content/:id',

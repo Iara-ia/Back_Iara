@@ -30,4 +30,12 @@ export const SocialService = {
       ? SocialModel.update(existing.id, { handle, tokenEnc, status: conn.data.status })
       : SocialModel.create({ personaId, platform, handle, tokenEnc, status: conn.data.status });
   },
+
+  // Desconectar/revogar: apaga o vínculo (e o token). No real, também revogaria o token na rede.
+  async disconnect(orgId: string, id: string) {
+    const acc = await SocialModel.findByIdInOrg(id, orgId);
+    if (!acc) throw new ServiceError(404, 'NOT_FOUND', 'Conta não encontrada nesta org.');
+    await SocialModel.delete(id);
+    return { id };
+  },
 };

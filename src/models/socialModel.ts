@@ -16,6 +16,14 @@ export const SocialModel = {
     });
   },
 
+  findByIdInOrg(id: string, orgId: string) {
+    return prisma.socialAccount.findFirst({ where: { id, persona: { orgId } } });
+  },
+
+  delete(id: string) {
+    return prisma.socialAccount.delete({ where: { id } });
+  },
+
   update(id: string, data: Prisma.SocialAccountUpdateInput) {
     return prisma.socialAccount.update({ where: { id }, data });
   },
