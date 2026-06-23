@@ -15,6 +15,9 @@ export const StorageController = {
       return { ok: false, error: { code: 'NOT_FOUND', message: 'Arquivo não encontrado.' } };
     }
     if (safe.endsWith('.png')) reply.type('image/png');
+    else if (safe.endsWith('.jpg') || safe.endsWith('.jpeg')) reply.type('image/jpeg');
+    else if (safe.endsWith('.webp')) reply.type('image/webp');
+    else if (safe.endsWith('.mp4')) reply.type('video/mp4');
     else if (safe.endsWith('.json')) reply.type('application/json');
     else reply.type('application/octet-stream');
     return reply.send(createReadStream(full));
