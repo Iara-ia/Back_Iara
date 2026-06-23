@@ -8,6 +8,7 @@ import { registerNicheRoutes } from './nicheRoutes.js';
 import { registerContentRoutes } from './contentRoutes.js';
 import { registerSocialRoutes } from './socialRoutes.js';
 import { registerEngagementRoutes } from './engagementRoutes.js';
+import { registerBillingRoutes } from './billingRoutes.js';
 import { registerAnalyticsRoutes } from './analyticsRoutes.js';
 
 export async function registerRoutes(app: FastifyInstance) {
@@ -20,5 +21,6 @@ export async function registerRoutes(app: FastifyInstance) {
   await registerContentRoutes(app);
   await registerSocialRoutes(app);
   await registerEngagementRoutes(app);
+  await registerBillingRoutes(app);
   await registerAnalyticsRoutes(app);
 }

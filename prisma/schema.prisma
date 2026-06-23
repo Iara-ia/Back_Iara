@@ -23,6 +23,13 @@ enum Role {
   VIEWER
 }
 
+enum PlanTier {
+  FREE
+  STARTER
+  PRO
+  SCALE
+}
+
 enum PersonaStatus {
   DRAFT
   ACTIVE
@@ -96,9 +103,11 @@ enum MonetizationSource {
 // ---------------------- MODELS ----------------------
 
 model Org {
-  id           String              @id @default(cuid())
-  name         String
-  createdAt    DateTime            @default(now())
+  id               String          @id @default(cuid())
+  name             String
+  plan             PlanTier        @default(FREE)
+  stripeCustomerId String?
+  createdAt        DateTime        @default(now())
   users        User[]
   personas     Persona[]
   contentItems ContentItem[]

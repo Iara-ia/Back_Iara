@@ -126,6 +126,12 @@ export const ReceiveInteractionSchema = z.object({
 });
 export type ReceiveInteractionInput = z.infer<typeof ReceiveInteractionSchema>;
 
+// ---- POST /billing/checkout ----
+export const CheckoutSchema = z.object({
+  plan: z.enum(['FREE', 'STARTER', 'PRO', 'SCALE']),
+});
+export type CheckoutInput = z.infer<typeof CheckoutSchema>;
+
 export interface InteractionDTO {
   id: string;
   personaId: string;
@@ -184,6 +190,8 @@ export const API_ROUTES = {
   receiveInteraction: 'POST /interactions',
   listInteractions: 'GET /interactions',
   autopilot: 'POST /content/autopilot',
+  billing: 'GET /billing',
+  checkout: 'POST /billing/checkout',
   listSocialAccounts: 'GET /social-accounts',
   approveContent: 'POST /content/:id/approve',
   getPersona: 'GET /personas/:id',

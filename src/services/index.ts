@@ -5,6 +5,7 @@ export { ContentService } from './contentService.js';
 export { AutopilotService } from './autopilotService.js';
 export { SocialService } from './socialService.js';
 export { EngagementService } from './engagementService.js';
+export { BillingService } from './billingService.js';
 export { AnalyticsService } from './analyticsService.js';
 export { ServiceError, isServiceError } from './errors.js';
 export { canWrite, canApprove } from './rbac.js';

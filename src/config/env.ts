@@ -24,6 +24,20 @@ export const config = {
     secretAccessKey: process.env.S3_SECRET_ACCESS_KEY ?? '',
     publicBaseUrl: process.env.STORAGE_PUBLIC_BASE_URL ?? '', // CDN/CloudFront; vazio = local
   },
+  // Billing SaaS: 'mock' (ativa na hora, sem gateway) | 'stripe' (Checkout real).
+  // Real exige STRIPE_SECRET_KEY + STRIPE_PRICE_{STARTER,PRO,SCALE} + `npm i stripe`.
+  billing: {
+    provider: (process.env.PROVIDER_BILLING ?? 'mock').toLowerCase(),
+    stripeSecretKey: process.env.STRIPE_SECRET_KEY ?? '',
+    priceIds: {
+      FREE: '',
+      STARTER: process.env.STRIPE_PRICE_STARTER ?? '',
+      PRO: process.env.STRIPE_PRICE_PRO ?? '',
+      SCALE: process.env.STRIPE_PRICE_SCALE ?? '',
+    } as Record<string, string>,
+    successUrl: process.env.BILLING_SUCCESS_URL ?? 'http://localhost:3000/planos?ok=1',
+    cancelUrl: process.env.BILLING_CANCEL_URL ?? 'http://localhost:3000/planos',
+  },
   isProd: process.env.NODE_ENV === 'production',
   isDev: process.env.NODE_ENV === 'development',
 } as const;
