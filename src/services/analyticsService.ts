@@ -9,13 +9,17 @@ import type { SocialPlatform } from '../lib/enums.js';
 const providers = createProviders();
 
 export const AnalyticsService = {
-  async overview(orgId: string): Promise<
+  async overview(
+    orgId: string,
+    personaId?: string,
+  ): Promise<
     AnalyticsOverviewDTO & { naFila: number; agendados: number; contasConectadas: number }
   > {
-    const counts = await AnalyticsModel.overviewCounts(orgId);
+    const counts = await AnalyticsModel.overviewCounts(orgId, personaId);
 
     // Agrega insights de cada post publicado (por plataforma) via provider de distribuição.
-    const publicados = await ContentModel.listByOrg(orgId, { status: 'PUBLICADO' });
+    // Filtra pela persona ativa quando informada (gestão por influencer).
+    const publicados = await ContentModel.listByOrg(orgId, { status: 'PUBLICADO', personaId });
     let reach = 0;
     let likes = 0;
     let comments = 0;

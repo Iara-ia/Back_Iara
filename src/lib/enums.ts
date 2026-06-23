@@ -46,6 +46,11 @@ export const SocialPlatform = {
   INSTAGRAM: 'INSTAGRAM',
   TIKTOK: 'TIKTOK',
   YOUTUBE: 'YOUTUBE',
+  FACEBOOK: 'FACEBOOK',
+  X: 'X',
+  THREADS: 'THREADS',
+  KWAI: 'KWAI',
+  PINTEREST: 'PINTEREST',
 } as const;
 export type SocialPlatform = (typeof SocialPlatform)[keyof typeof SocialPlatform];
 

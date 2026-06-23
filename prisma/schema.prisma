@@ -58,6 +58,11 @@ enum SocialPlatform {
   INSTAGRAM
   TIKTOK
   YOUTUBE
+  FACEBOOK
+  X
+  THREADS
+  KWAI
+  PINTEREST
 }
 
 enum AccountStatus {

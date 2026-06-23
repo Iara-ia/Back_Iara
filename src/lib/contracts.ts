@@ -7,7 +7,16 @@
 // ============================================================
 import { z } from 'zod';
 
-export const SocialPlatformSchema = z.enum(['INSTAGRAM', 'TIKTOK', 'YOUTUBE']);
+export const SocialPlatformSchema = z.enum([
+  'INSTAGRAM',
+  'TIKTOK',
+  'YOUTUBE',
+  'FACEBOOK',
+  'X',
+  'THREADS',
+  'KWAI',
+  'PINTEREST',
+]);
 export const ContentStatusSchema = z.enum([
   'RASCUNHO',
   'GERADO',
